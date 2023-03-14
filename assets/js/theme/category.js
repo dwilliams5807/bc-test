@@ -8,6 +8,8 @@ export default class Category extends CatalogPage {
     constructor(context) {
         super(context);
         this.validationDictionary = createTranslationDictionary(context);
+        this.addAllToCart = this.addAllToCart.bind(this);
+        this.deleteCart = this.deleteCart.bind(this);
     }
 
     setLiveRegionAttributes($element, roleType, ariaLiveStatus) {
@@ -46,6 +48,11 @@ export default class Category extends CatalogPage {
         $('a.reset-btn').on('click', () => this.setLiveRegionsAttributes($('span.reset-message'), 'status', 'polite'));
 
         this.ariaNotifyNoProducts();
+
+        this.getCart();
+
+        document.getElementById("addButton").addEventListener("click", this.addAllToCart); 
+        document.getElementById("removeButton").addEventListener("click", this.deleteCart); 
     }
 
     ariaNotifyNoProducts() {
@@ -101,4 +108,84 @@ export default class Category extends CatalogPage {
             },
         });
     }
+
+    async getCart() {
+        const addButton = document.getElementById("addButton");
+        const removeButton = document.getElementById("removeButton");
+        try {
+          const response = await fetch('/api/storefront/carts?', {
+            method: 'GET',
+            credentials: "same-origin",
+          });
+          const data = await response.json();
+          if (data[0].id) {
+            addButton.disabled = true;
+            removeButton.classList.remove("hide")
+            return data[0].id;
+          } else {
+          removeButton.classList.add("hide")
+          addButton.disabled = false;
+          }
+        } catch {
+          removeButton.classList.add("hide")
+          addButton.disabled = false;
+        }
+      }
+
+     addAllToCart() {
+        const tipTool = document.getElementById("tipTool")
+        const lineItems = this.context.catProducts.map(product => {
+          return {
+            quantity: 1,
+            product_id: product.id
+          };
+        });
+        const requestBody = {
+          line_items: lineItems
+        };
+          fetch('/api/storefront/carts', {
+            method: 'POST',
+            credentials: "same-origin",
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+          })
+          .then(response => response.json())
+          .then(data => {
+              tipTool.innerText = `${lineItems.length} item(s) added to cart`
+              this.getCart();
+              setTimeout(() => {
+               tipTool.innerText = ""
+               }, 3000);
+      
+          })
+          .catch(error => {
+            console.error('Error adding items to cart', error);
+          });
+      }
+
+    async deleteCart() {
+        const cartID = await this.getCart();
+        const tipTool = document.getElementById("tipTool")
+        if (cartID) {
+          fetch(`/api/storefront/carts/${cartID}?`, {
+            method: 'DELETE',
+            credentials: "same-origin",
+          })
+            .then(response => response.text())
+            .then(data => {
+              tipTool.innerText = "All items have been deleted from the cart"
+              this.getCart();
+              setTimeout(() => {
+              tipTool.innerText = ""
+               }, 3000);
+            })
+            .catch(error => {
+              console.error("error deleting cart", error);
+            });
+        } else {
+          console.log("no cart found");
+        }
+      }
 }

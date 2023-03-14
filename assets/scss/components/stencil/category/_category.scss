@@ -9,3 +9,24 @@
 .category-header-image {
     width: 100%;
 }
+
+#tipTool {
+    text-align: center;
+    width: 100%;
+    height: 25px;
+    color: green;
+
+}
+
+#removeButton {
+    display: block;
+    &.hide {
+        display: none;
+    }
+}
+
+.cat-btn-container {
+    display:flex; 
+    justify-content: center;
+    align-items: center;
+}

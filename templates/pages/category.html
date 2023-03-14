@@ -16,7 +16,7 @@ category:
 {{/partial}}
 
 {{#if customer}}
-<div class="banners"> Hey there <strong>{{customer.name}}</strong>! In case you forgot, your email is <strong>{{customer.email}}</strong> and phone number is <strong>{{customer.phone}}.</strong> </div>
+<div class="banners"> Hi <strong>{{customer.name}}.</strong> Your email: <strong>{{customer.email}}.</strong> Your phone number: <strong>{{customer.phone}}.</strong> </div>
  {{/if}}
 
 {{#partial "page"}}
@@ -36,15 +36,15 @@ category:
 {{/unless}}
 {{{category.description}}}
 <div class="page">
-    <p id="tipTool" style="text-align: center;"></p>
-    <div style="display:flex; justify-content: center; align-items: center;">
-        <button id="addButton" onclick="addAllToCart()" class="button button--primary">
+    <div class="cat-btn-container">
+        <button id="addButton" class="button button--primary">
          Add All To Cart
         </button>
-        <button id="removeButton" style="display: none;" onclick="deleteCart()" class="button button--default">
+        <button id="removeButton" class="button button--default hide">
             Remove All Items
         </button>
     </div>
+    <p id="tipTool"></p>
     {{#if category.faceted_search_enabled}}
         <aside class="page-sidebar" id="faceted-search-container">
             {{> components/category/sidebar}}
@@ -71,116 +71,3 @@ category:
 {{> layout/base}}
 
 
-<script>
-
-window.onload = (event) => {
- getCart() 
- $(".ProductList li:first-child img")
-    .mouseover(function() { 
-        $(this).attr("src", "http://cdn2.bigcommerce.com/n-pktq5q/b2aus7wd/products/88/images/460/cmpltunknwn_wolfgold_view003__18141.1396558339.1280.1280.jpg?c=1");
-        })
-    .mouseout(function() {
-       $(this).attr("src", "http://cdn2.bigcommerce.com/n-pktq5q/b2aus7wd/products/88/images/461/cmpltunknwn_wolfgold_view001__55714.1396558344.330.330.jpg?c=1");
-    })
-//  const addButton = document.getElementById("addButton");
-//  const removeButton = document.getElementById("removeButton");
-// if (isCart) {
-// addButton.classList.add("hide")
-// removeButton.classList.remove("hide")
-// } else {
-// removeButton.classList.add("hide")
-// addButton.classList.remove("hide")
-// }
-
-};
-
-async function getCart() {
-  try {
-    const response = await fetch('/api/storefront/carts?', {
-      method: 'GET',
-      credentials: "same-origin",
-    });
-    const data = await response.json();
-    const addButton = document.getElementById("addButton");
-    const removeButton = document.getElementById("removeButton");
-    if (data[0].id) {
-      console.log(data[0].id);
-      addButton.style.display = "none"
-      removeButton.style.display = "block"
-      return data[0].id;
-    } else {
-    removeButton.style.display = "none"
-    addButton.style.display = "block"
-    }
-  } catch (error) {
-    removeButton.style.display = "none"
-    addButton.style.display = "block"
-    console.error("error getting cart", error);
-  }
-}
-
-async function deleteCart() {
-  const cartID = await getCart();
-  const tipTool = document.getElementById("tipTool")
-  console.log(`/api/storefront/carts/${cartID}`);
-  if (cartID) {
-    fetch(`/api/storefront/carts/${cartID}?`, {
-      method: 'DELETE',
-      credentials: "same-origin",
-    })
-      .then(response => response.text())
-      .then(data => {
-        console.log("cart deleted");
-        tipTool.innerText = "All items have been deleted from the cart"
-        setTimeout(() => {
-         location.reload();
-         }, 1000);
-      })
-      .catch(error => {
-        console.error("error deleting cart", error);
-      });
-  } else {
-    console.log("no cart found");
-  }
-}
-
-function addAllToCart() {
-  const jsContext = JSON.parse({{jsContext}});
-  const tipTool = document.getElementById("tipTool")
-  const lineItems = jsContext.catProducts.map(product => {
-    return {
-      quantity: 1,
-      product_id: product.id
-    };
-  });
-  const requestBody = {
-    line_items: lineItems
-  };
-  console.log(requestBody,"rb")
-    fetch('/api/storefront/carts', {
-      method: 'POST',
-      credentials: "same-origin",
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data)
-        tipTool.innerText = `${lineItems.length} item(s) added to cart`
-        console.log(`${lineItems.length} item(s) added to cart`);
-        setTimeout(() => {
-         location.reload();
-         }, 1000);
-
-    
-    })
-    .catch(error => {
-      console.error('Error adding items to cart', error);
-    });
-}
-
-
-
-</script>
